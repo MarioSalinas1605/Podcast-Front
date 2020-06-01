@@ -5,6 +5,7 @@ export default class extends React.Component {
     static async getInitialProps(params) {
         let req = await fetch('https://api.audioboom.com/channels/recommended')
         let { body: channels } = await req.json()
+        
         return { channels }
     }
 
@@ -15,9 +16,9 @@ export default class extends React.Component {
             <header>Podcasts</header>
             <div className="channels">
                 {
-                    channels.map((channel, index) => (
-                        <Link href="/channel" prefetch>
-                            <a className="channel" key={index}>
+                    channels.map(channel => (
+                        <Link href={`/channel?id=${channel.id}`} key={channel.id}>
+                            <a className="channel" >
                                 <img src={channel.urls.logo_image.original} alt=""></img>
                                 <h2>{channel.title}</h2>
                             </a>
