@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Layout from '../components/Layout.jsx'
 
 export default class extends React.Component {
 
@@ -27,48 +28,43 @@ export default class extends React.Component {
         const { channel, audioClips, series } = this.props
 
         return (<div>
-            <header>Podcasts</header>
+            <Layout title="Podcasts">
+                <div className="banner" style={{ backgroundImage: `url(${channel.urls.banner_image.original})` }} />
 
-            <div className="banner" style={{ backgroundImage: `url(${channel.urls.banner_image.original})` }} />
+                <h1>{channel.title}</h1>
 
-            <h1>{channel.title}</h1>
-
-            {series.length > 0 &&
-                <div>
-                    <h2>Series</h2>
-                    <div className="channels">
-                        {series.map((serie) => (
-                            <Link href={`/channel?id=${serie.id}`}>
-                                <a className="channel">
-                                    <img src={serie.urls.logo_image.original} alt="" />
-                                    <h2>{serie.title}</h2>
-                                </a>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            }
-
-            <h2>Ultimos Podcasts</h2>
-            {audioClips.map((clip) => (
-                <Link href={`/podcast?id=${clip.id}`} key={clip.id}>
-                    <a className='podcast'>
-                        <h3>{clip.title}</h3>
-                        <div className='meta'>
-                            {Math.ceil(clip.duration / 60)} minutes
+                {series.length > 0 &&
+                    <div>
+                        <h2>Series</h2>
+                        <div className="channels">
+                            {series.map((serie) => (
+                                <Link href={`/channel?id=${serie.id}`}>
+                                    <a className="channel">
+                                        <img src={serie.urls.logo_image.original} alt="" />
+                                        <h2>{serie.title}</h2>
+                                    </a>
+                                </Link>
+                            ))}
                         </div>
-                    </a>
-                </Link>
-            ))}
+                    </div>
+                }
+
+                <h2>Ultimos Podcasts</h2>
+                {audioClips.map((clip) => (
+                    <Link href={`/podcast?id=${clip.id}`} key={clip.id}>
+                        <a className='podcast'>
+                            <h3>{clip.title}</h3>
+                            <div className='meta'>
+                                {Math.ceil(clip.duration / 60)} minutes
+                            </div>
+                        </a>
+                    </Link>
+                ))}
+            </Layout>
+
+
 
             <style jsx>{`
-            header {
-                color: #fff;
-                background: #8756ca;
-                padding: 15px;
-                text-align: center;
-            }
-
             .banner {
                 width: 100%;
                 padding-bottom: 25%;
