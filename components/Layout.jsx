@@ -8,6 +8,7 @@ export default class Layout extends React.Component {
         return <div>
 
             <Head>
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
                 <title>
                     {title}
                 </title>
