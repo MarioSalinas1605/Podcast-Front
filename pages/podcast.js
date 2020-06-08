@@ -1,16 +1,32 @@
 import Link from 'next/link'
+import Error from 'next/error'
 
 export default class extends React.Component {
 
-    static async getInitialProps({ query }) {
-        let id = query.id
-        let fetchClip = await fetch(`https://api.audioboom.com/audio_clips/${id}.mp3`)
-        let clip = (await fetchClip.json()).body.audio_clip
-        return { clip }
+    static async getInitialProps({ query, res }) {
+        try {
+            let id = query.id
+            let fetchClip = await fetch(`https://api.audioboom.com/audio_clips/${id}.mp3`)
+
+            if (fetchClip.status != 200) {
+                res.statusCode = fetchClip.status
+                return { clip: null, statusCode: fetchClip.status }
+            }
+
+            let clip = (await fetchClip.json()).body.audio_clip
+            return { clip, statusCode: 200 }
+        } catch (error) {
+            return { clip: null, statusCode: 503 }
+        }
     }
 
     render() {
-        const { clip } = this.props
+        const { clip, statusCode } = this.props
+
+        if (statusCode!=200) {
+            return <Error statusCode={statusCode}></Error>
+        }
+
         return <div>
             <header>Podcasts</header>
 

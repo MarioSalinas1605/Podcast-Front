@@ -1,33 +1,46 @@
-import Link from 'next/link'
 import Layout from '../components/Layout.jsx'
 import ChannelGrid from '../components/ChannelGrid.jsx'
 import PodcastsList from '../components/PodcastsList.jsx'
+import Error from 'next/error'
 
 export default class extends React.Component {
 
-    static async getInitialProps({ query }) {
+    static async getInitialProps({ query, res }) {
         let idChannel = query.id
 
-        let [reqChannel, reqAudios, reqSeries] = await Promise.all([
-            fetch(`https://api.audioboom.com/channels/${idChannel}`),
-            fetch(`https://api.audioboom.com/channels/${idChannel}/audio_clips`),
-            fetch(`https://api.audioboom.com/channels/${idChannel}/child_channels`)
-        ])
+        try {
+            let [reqChannel, reqAudios, reqSeries] = await Promise.all([
+                fetch(`https://api.audioboom.com/channels/${idChannel}`),
+                fetch(`https://api.audioboom.com/channels/${idChannel}/audio_clips`),
+                fetch(`https://api.audioboom.com/channels/${idChannel}/child_channels`)
+            ])
 
-        let dataChannel = await reqChannel.json()
-        let channel = dataChannel.body.channel
-
-        let dataAudios = await reqAudios.json()
-        let audioClips = dataAudios.body.audio_clips
-
-        let dataSeries = await reqSeries.json()
-        let series = dataSeries.body.channels
-
-        return { channel, audioClips, series }
+            if (reqChannel.status == 404, reqAudios.status == 404, reqSeries.status == 404) {
+                res.statusCode = 404
+                return { channel: null, audioClips:null, series:null, statusCode: reqChannel.status }
+            }
+    
+            let dataChannel = await reqChannel.json()
+            let channel = dataChannel.body.channel
+    
+            let dataAudios = await reqAudios.json()
+            let audioClips = dataAudios.body.audio_clips
+    
+            let dataSeries = await reqSeries.json()
+            let series = dataSeries.body.channels
+    
+            return { channel, audioClips, series, statusCode: 200 }
+        } catch (error) {
+            return { channel: null, audioClips:null, series:null, statusCode: 503 }
+        }
     }
 
     render() {
-        const { channel, audioClips, series } = this.props
+        const { channel, audioClips, series, statusCode } = this.props
+
+        if (statusCode!=200) {
+            return <Error statusCode={statusCode}></Error>
+        }
 
         return (<div>
             <Layout title={channel.title}>
