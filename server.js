@@ -6,5 +6,6 @@ const port = process.env.PORT || 3000
 
 const {createServer} = require('http')
 app.prepare().then(() => {
+  console.log(`App listening at http://localhost:${port}`);
   createServer(handler).listen(port)
 })
