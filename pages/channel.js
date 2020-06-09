@@ -5,6 +5,11 @@ import Error from 'next/error'
 
 export default class extends React.Component {
 
+    constructor(props) {
+        super(props)
+        this.state = { openPodcast: null }
+    }
+
     static async getInitialProps({ query, res }) {
         let idChannel = query.id
 
@@ -35,8 +40,16 @@ export default class extends React.Component {
         }
     }
 
+    openPodcast = (event, podcast) => {
+        event.preventDefault()
+        this.setState({
+            openPodcast: podcast
+        })
+    }
+
     render() {
         const { channel, audioClips, series, statusCode } = this.props
+        const { openPodcast } = this.state
 
         if (statusCode!=200) {
             return <Error statusCode={statusCode}></Error>
@@ -45,6 +58,8 @@ export default class extends React.Component {
         return (<div>
             <Layout title={channel.title}>
                 <div className="banner" style={{ backgroundImage: `url(${channel.urls.banner_image.original})` }} />
+
+                { openPodcast && <div>Hay un podcast abierto</div> }
 
                 <h1>{channel.title}</h1>
 
@@ -59,7 +74,9 @@ export default class extends React.Component {
                     audioClips.length &&
                     <div>
                         <h2>Ultimos Podcasts</h2>
-                        <PodcastsList audioClips={audioClips} />
+                        <PodcastsList 
+                        onClickPodcast={ this.openPodcast }
+                        audioClips={audioClips} />
                     </div>
                 }
             </Layout>

@@ -3,17 +3,21 @@ import Link from 'next/link'
 export default class PodcastsList extends React.Component {
 
     render() {
-        const { audioClips } = this.props
+        const { audioClips, onClickPodcast } = this.props
+        
         return <div>
             {audioClips.map((clip) => (
-                <Link href={`/podcast?id=${clip.id}`} key={clip.id}>
-                    <a className='podcast'>
+                // <Link href={`/podcast?id=${clip.id}`} key={clip.id}>
+                    <a 
+                    className='podcast' 
+                    href={`/podcast?id=${clip.id}`} key={clip.id}
+                    onClick={(event)=>onClickPodcast(event, clip)}>
                         <h3>{clip.title}</h3>
                         <div className='meta'>
                             {Math.ceil(clip.duration / 60)} minutes
-                    </div>
+                        </div>
                     </a>
-                </Link>
+                // </Link>
             ))}
             <style jsx>{`
                 .podcast {
