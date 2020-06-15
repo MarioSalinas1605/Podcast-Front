@@ -1,4 +1,5 @@
-import Link from 'next/link'
+import { Link } from '../routes'
+import slug from '../helpers/slug'
 
 export default class PodcastsList extends React.Component {
 
@@ -7,17 +8,24 @@ export default class PodcastsList extends React.Component {
         
         return <div>
             {audioClips.map((clip) => (
-                // <Link href={`/podcast?id=${clip.id}`} key={clip.id}>
+                <Link route='podcast' 
+                    params={{ 
+                        slug: slug(clip.title), 
+                        id: clip.id,
+                        slugChannel: slug(clip.channel.title), 
+                        idChannel: clip.channel.id 
+                    }} 
+                    key={clip.id}>
                     <a 
                     className='podcast' 
-                    href={`/podcast?id=${clip.id}`} key={clip.id}
+                    href={`/${slug(clip.channel.title)}.${clip.channel.id}/${slug(clip.title)}.${clip.id}`}
                     onClick={(event)=>onClickPodcast(event, clip)}>
                         <h3>{clip.title}</h3>
                         <div className='meta'>
                             {Math.ceil(clip.duration / 60)} minutes
                         </div>
                     </a>
-                // </Link>
+                </Link>
             ))}
             <style jsx>{`
                 .podcast {
