@@ -1,58 +1,56 @@
 import Link from 'next/link'
 import Error from 'next/error'
 
-export default class extends React.Component {
+export async function getServerSideProps({ query, res }) {
+    try {
+        let id = query.id
+        let fetchClip = await fetch(`https://api.audioboom.com/audio_clips/${id}.mp3`)
 
-    static async getInitialProps({ query, res }) {
-        try {
-            let id = query.id
-            let fetchClip = await fetch(`https://api.audioboom.com/audio_clips/${id}.mp3`)
-
-            if (fetchClip.status != 200) {
-                res.statusCode = fetchClip.status
-                return { clip: null, statusCode: fetchClip.status }
-            }
-
-            let clip = (await fetchClip.json()).body.audio_clip
-            return { clip, statusCode: 200 }
-        } catch (error) {
-            return { clip: null, statusCode: 503 }
+        if (fetchClip.status != 200) {
+            res.statusCode = fetchClip.status
+            return { props: { data: { clip: null, statusCode: fetchClip.status }}}
         }
+
+        let clip = (await fetchClip.json()).body.audio_clip
+        return { props: { data: { clip, statusCode: 200 }}}
+    } catch (error) {
+        return { props: { data: { clip: null, statusCode: 503 }}}
+    }
+}
+
+export default function ({ data }) {
+    const { clip, statusCode } = data
+
+    if (statusCode != 200) {
+        return <Error statusCode={statusCode}></Error>
     }
 
-    render() {
-        const { clip, statusCode } = this.props
+    return <div>
+        <header>Podcasts</header>
 
-        if (statusCode!=200) {
-            return <Error statusCode={statusCode}></Error>
-        }
+        <div className='modal'>
+            <div className='clip'>
+                <nav>
+                    <Link href={`/channel?id=${clip.channel.id}`}>
+                        <a className='close'>&lt; Volver</a>
+                    </Link>
+                </nav>
 
-        return <div>
-            <header>Podcasts</header>
+                <picture>
+                    <div style={{ backgroundImage: `url(${clip.urls.image || clip.channel.urls.logo_image.original})` }} />
+                </picture>
 
-            <div className='modal'>
-                <div className='clip'>
-                    <nav>
-                        <Link href={`/channel?id=${clip.channel.id}`}>
-                            <a className='close'>&lt; Volver</a>
-                        </Link>
-                    </nav>
-
-                    <picture>
-                        <div style={{ backgroundImage: `url(${clip.urls.image || clip.channel.urls.logo_image.original})` }} />
-                    </picture>
-
-                    <div className='player'>
-                        <h3>{clip.title}</h3>
-                        <h6>{clip.channel.title}</h6>
-                        <audio controls autoPlay={true}>
-                            <source src={clip.urls.high_mp3} type='audio/mpeg' />
-                        </audio>
-                    </div>
+                <div className='player'>
+                    <h3>{clip.title}</h3>
+                    <h6>{clip.channel.title}</h6>
+                    <audio controls autoPlay={true}>
+                        <source src={clip.urls.high_mp3} type='audio/mpeg' />
+                    </audio>
                 </div>
             </div>
+        </div>
 
-            <style jsx>{`
+        <style jsx>{`
             nav {
                 background: none;
             }
@@ -112,13 +110,12 @@ export default class extends React.Component {
             }
         `}</style>
 
-            <style global jsx>{`
+        <style global jsx>{`
             body {
             margin: 0;
             font-family: system-ui;
             background: white;
             }
         `}</style>
-        </div>
-    }
+    </div>
 }

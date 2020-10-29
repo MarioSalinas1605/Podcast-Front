@@ -3,97 +3,87 @@ import ChannelGrid from '../components/ChannelGrid.jsx'
 import PodcastsList from '../components/PodcastsList.jsx'
 import Error from 'next/error'
 import PodcastPlayer from '../components/PodcastPlayer.jsx'
+import { useState } from 'react'
+export async function getServerSideProps({ query, res }) {
+    let idChannel = query.id
 
-export default class extends React.Component {
+    try {
+        let [reqChannel, reqAudios, reqSeries] = await Promise.all([
+            fetch(`https://api.audioboom.com/channels/${idChannel}`),
+            fetch(`https://api.audioboom.com/channels/${idChannel}/audio_clips`),
+            fetch(`https://api.audioboom.com/channels/${idChannel}/child_channels`)
+        ])
 
-    constructor(props) {
-        super(props)
-        this.state = { openPodcast: null }
+        if (reqChannel.status == 404, reqAudios.status == 404, reqSeries.status == 404) {
+            res.statusCode = 404
+            return { props: { data: { channel: null, audioClips: null, series: null, statusCode: reqChannel.status }}}
+        }
+
+        let dataChannel = await reqChannel.json()
+        let channel = dataChannel.body.channel
+
+        let dataAudios = await reqAudios.json()
+        let audioClips = dataAudios.body.audio_clips
+
+        let dataSeries = await reqSeries.json()
+        let series = dataSeries.body.channels
+
+        return { props: { data: { channel, audioClips, series, statusCode: 200 }}}
+    } catch (error) {
+        return { props: { data: { channel: null, audioClips: null, series: null, statusCode: 503 }}}
+    }
+}
+
+export default function ({ data }) {
+    const [openPodcast, setOpenPodcast] = useState(null)
+
+    const openPodcastHandler = (event, podcast) => {
+        event.preventDefault()
+        setOpenPodcast(podcast)
     }
 
-    static async getInitialProps({ query, res }) {
-        let idChannel = query.id
+    const closePodcastHandler = (event) => {
+        event.preventDefault()
+        setOpenPodcast(null)
+    }
 
-        try {
-            let [reqChannel, reqAudios, reqSeries] = await Promise.all([
-                fetch(`https://api.audioboom.com/channels/${idChannel}`),
-                fetch(`https://api.audioboom.com/channels/${idChannel}/audio_clips`),
-                fetch(`https://api.audioboom.com/channels/${idChannel}/child_channels`)
-            ])
+    const { channel, audioClips, series, statusCode } = data
 
-            if (reqChannel.status == 404, reqAudios.status == 404, reqSeries.status == 404) {
-                res.statusCode = 404
-                return { channel: null, audioClips:null, series:null, statusCode: reqChannel.status }
+    if (statusCode != 200) {
+        return <Error statusCode={statusCode}></Error>
+    }
+
+    return (<div>
+        <Layout title={channel.title}>
+            <div className="banner" style={{ backgroundImage: `url(${channel.urls.banner_image.original})` }} />
+
+            {openPodcast &&
+                <div className="modal">
+                    <PodcastPlayer clip={openPodcast} onClose={closePodcastHandler} />
+                </div>
             }
-    
-            let dataChannel = await reqChannel.json()
-            let channel = dataChannel.body.channel
-    
-            let dataAudios = await reqAudios.json()
-            let audioClips = dataAudios.body.audio_clips
-    
-            let dataSeries = await reqSeries.json()
-            let series = dataSeries.body.channels
-    
-            return { channel, audioClips, series, statusCode: 200 }
-        } catch (error) {
-            return { channel: null, audioClips:null, series:null, statusCode: 503 }
-        }
-    }
 
-    openPodcast = (event, podcast) => {
-        event.preventDefault()
-        this.setState({
-            openPodcast: podcast
-        })
-    }
+            <h1>{channel.title}</h1>
 
-    closePodcast = (event) => {
-        event.preventDefault()
-        this.setState({
-            openPodcast: null
-        })
-    }
+            {series.length > 0 &&
+                <div>
+                    <h2>Series</h2>
+                    <ChannelGrid channels={series} />
+                </div>
+            }
 
-    render() {
-        const { channel, audioClips, series, statusCode } = this.props
-        const { openPodcast } = this.state
-
-        if (statusCode!=200) {
-            return <Error statusCode={statusCode}></Error>
-        }
-
-        return (<div>
-            <Layout title={channel.title}>
-                <div className="banner" style={{ backgroundImage: `url(${channel.urls.banner_image.original})` }} />
-
-                { openPodcast && 
-                    <div className="modal">
-                        <PodcastPlayer clip={ openPodcast } onClose={ this.closePodcast }/>
-                    </div> 
-                }
-
-                <h1>{channel.title}</h1>
-
-                {series.length > 0 &&
-                    <div>
-                        <h2>Series</h2>
-                        <ChannelGrid channels={series}/>
-                    </div>
-                }
-
-                {
-                    audioClips.length &&
-                    <div>
-                        <h2>Ultimos Podcasts</h2>
-                        <PodcastsList 
-                        onClickPodcast={ this.openPodcast }
+            {
+                audioClips.length &&
+                <div>
+                    <h2>Ultimos Podcasts</h2>
+                    <PodcastsList
+                        onClickPodcast={(openPodcastHandler)}
                         audioClips={audioClips} />
-                    </div>
-                }
-            </Layout>
+                </div>
+            }
+        </Layout>
 
-            <style jsx>{`
+        <style jsx>{`
             .banner {
                 width: 100%;
                 padding-bottom: 25%;
@@ -122,6 +112,5 @@ export default class extends React.Component {
                 z-index: 99999;
             }
         `}</style>
-        </div>)
-    }
+    </div>)
 }
